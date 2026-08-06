@@ -1,6 +1,6 @@
 import express from "express";
 import path from "path";
-import { MongoClient, Db } from "mongodb";
+import fs from "fs";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
@@ -9,17 +9,12 @@ dotenv.config();
 
 const app = express();
 const PORT = 3000;
+const DB_FILE = path.join(process.cwd(), "data.json");
 
 // Parse JSON request bodies
 app.use(express.json());
 
-// MongoDB Configuration & Client
-const MONGODB_URI = process.env.MONGODB_URI;
-let mongoDbClient: MongoClient | null = null;
-let mongoDb: Db | null = null;
-let isMongoConnected = false;
-
-// Initialize Database structure
+// Initialize Database structure if it doesn't exist
 const initialDb = {
   users: [
     {
@@ -161,104 +156,31 @@ const initialDb = {
   ]
 };
 
-// In-Memory state store (synchronized with MongoDB when connected)
-let currentDb = JSON.parse(JSON.stringify(initialDb));
-
-// MongoDB Sync Functions
-async function initMongo() {
-  const uri = MONGODB_URI ? MONGODB_URI.trim() : "";
-  if (!uri || (!uri.startsWith("mongodb://") && !uri.startsWith("mongodb+srv://"))) {
-    console.log("[MongoDB] MONGODB_URI is not set or valid. Using active memory store.");
-    return;
-  }
-  try {
-    mongoDbClient = new MongoClient(uri);
-    await mongoDbClient.connect();
-    mongoDb = mongoDbClient.db();
-    isMongoConnected = true;
-    console.log("[MongoDB] Successfully connected to MongoDB database!");
-
-    // Fetch existing data from MongoDB if present
-    const mongoUsers = await mongoDb.collection("users").find({}).toArray();
-    const mongoProducts = await mongoDb.collection("products").find({}).toArray();
-    const mongoOrders = await mongoDb.collection("orders").find({}).toArray();
-    const mongoCatDoc = await mongoDb.collection("categories").findOne({ name: "categories_list" });
-
-    if (mongoUsers.length > 0) {
-      currentDb.users = mongoUsers.map(({ _id, ...u }) => u as any);
-    } else {
-      await mongoDb.collection("users").insertMany(initialDb.users.map(u => ({ ...u })));
-    }
-
-    if (mongoProducts.length > 0) {
-      currentDb.products = mongoProducts.map(({ _id, ...p }) => p as any);
-    } else {
-      await mongoDb.collection("products").insertMany(initialDb.products.map(p => ({ ...p })));
-    }
-
-    if (mongoOrders.length > 0) {
-      currentDb.orders = mongoOrders.map(({ _id, ...o }) => o as any);
-    } else {
-      await mongoDb.collection("orders").insertMany(initialDb.orders.map(o => ({ ...o })));
-    }
-
-    if (mongoCatDoc && Array.isArray(mongoCatDoc.items) && mongoCatDoc.items.length > 0) {
-      currentDb.categories = mongoCatDoc.items;
-    } else {
-      await mongoDb.collection("categories").updateOne(
-        { name: "categories_list" },
-        { $set: { name: "categories_list", items: initialDb.categories } },
-        { upsert: true }
-      );
-    }
-  } catch (err: any) {
-    console.warn("[MongoDB] Failed to connect to MongoDB, defaulting to in-memory store:", err.message);
-    isMongoConnected = false;
-  }
-}
-
-async function syncToMongo(data: typeof initialDb) {
-  if (!isMongoConnected || !mongoDb) return;
-  try {
-    // Sync users
-    await mongoDb.collection("users").deleteMany({});
-    if (data.users.length > 0) {
-      await mongoDb.collection("users").insertMany(data.users.map(u => ({ ...u })));
-    }
-
-    // Sync products
-    await mongoDb.collection("products").deleteMany({});
-    if (data.products.length > 0) {
-      await mongoDb.collection("products").insertMany(data.products.map(p => ({ ...p })));
-    }
-
-    // Sync orders
-    await mongoDb.collection("orders").deleteMany({});
-    if (data.orders.length > 0) {
-      await mongoDb.collection("orders").insertMany(data.orders.map(o => ({ ...o })));
-    }
-
-    // Sync categories
-    await mongoDb.collection("categories").updateOne(
-      { name: "categories_list" },
-      { $set: { name: "categories_list", items: data.categories } },
-      { upsert: true }
-    );
-  } catch (err: any) {
-    console.error("[MongoDB] Sync error:", err.message);
-  }
-}
-
+// Database utility functions
 function readDb() {
-  return currentDb;
+  try {
+    if (!fs.existsSync(DB_FILE)) {
+      fs.writeFileSync(DB_FILE, JSON.stringify(initialDb, null, 2), "utf8");
+      return initialDb;
+    }
+    const data = fs.readFileSync(DB_FILE, "utf8");
+    return JSON.parse(data);
+  } catch (error) {
+    console.error("Error reading db:", error);
+    return initialDb;
+  }
 }
 
 function writeDb(data: typeof initialDb) {
-  currentDb = data;
-  syncToMongo(data).catch(err => console.error("[MongoDB] Write async error:", err));
+  try {
+    fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), "utf8");
+  } catch (error) {
+    console.error("Error writing db:", error);
+  }
 }
 
 // Ensure database is initialized
+const currentDb = readDb();
 let dbUpdated = false;
 
 // Force-update categories
@@ -892,8 +814,6 @@ Make it sound highly strategic, professional, consultative, and incredibly detai
 // ============================================================================
 
 async function startServer() {
-  await initMongo();
-
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
       server: { middlewareMode: true },

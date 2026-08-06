@@ -8,6 +8,13 @@ import {
 } from "lucide-react";
 
 import LogoSelectorModal, { getActiveLogoPath } from "./LogoSelectorModal";
+import { 
+  getClientProducts, 
+  saveClientProducts, 
+  getClientCategories, 
+  saveClientCategories, 
+  FALLBACK_PRODUCT_IMAGE 
+} from "../data/initialProducts";
 
 export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
   const [activeLogo, setActiveLogo] = useState(() => getActiveLogoPath());
@@ -71,13 +78,22 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
       const res = await fetch("/api/categories");
       if (res.ok) {
         const data = await res.json();
-        setCategories(data);
-        if (data.length > 0 && !data.includes(formCategory)) {
-          setFormCategory(data[0]);
+        if (Array.isArray(data) && data.length > 0) {
+          setCategories(data);
+          saveClientCategories(data);
+          if (data.length > 0 && !data.includes(formCategory)) {
+            setFormCategory(data[0]);
+          }
+          return;
         }
       }
     } catch (err) {
-      console.error("Failed to fetch categories", err);
+      console.warn("API categories unavailable, loading client categories", err);
+    }
+    const localCats = getClientCategories();
+    setCategories(localCats);
+    if (localCats.length > 0 && !localCats.includes(formCategory)) {
+      setFormCategory(localCats[0]);
     }
   };
 
@@ -94,17 +110,23 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: newCategoryName })
       });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.message || "Failed to create category");
+      if (res.ok) {
+        setNewCategoryName("");
+        fetchCategories();
+        return;
       }
-      setNewCategoryName("");
-      fetchCategories();
     } catch (err) {
-      alert(err.message || "Failed to save category");
+      console.warn("API save category failed, updating client categories", err);
     } finally {
       setCategoryLoading(false);
     }
+    const currentCats = getClientCategories();
+    if (!currentCats.includes(newCategoryName.trim())) {
+      const updated = [...currentCats, newCategoryName.trim()];
+      saveClientCategories(updated);
+      setCategories(updated);
+    }
+    setNewCategoryName("");
   };
 
   const handleDeleteCategory = async (name) => {
@@ -118,39 +140,60 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name })
       });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.message || "Failed to delete category");
+      if (res.ok) {
+        fetchCategories();
+        return;
       }
-      fetchCategories();
     } catch (err) {
-      alert(err.message || "Failed to delete category");
+      console.warn("API delete category failed, updating client categories", err);
     } finally {
       setCategoryLoading(false);
     }
+    const currentCats = getClientCategories();
+    const updated = currentCats.filter((c) => c !== name);
+    saveClientCategories(updated);
+    setCategories(updated);
   };
 
   const fetchData = async () => {
     try {
       setLoading(true);
       setError(null);
-      const [resProducts, resOrders] = await Promise.all([
-        fetch("/api/products"),
-        fetch("/api/orders")
-      ]);
+      let dataProducts = null;
+      let dataOrders = [];
 
-      if (!resProducts.ok || !resOrders.ok) {
-        throw new Error("Failed to load dashboard data");
+      try {
+        const resProducts = await fetch("/api/products");
+        if (resProducts.ok) {
+          const json = await resProducts.json();
+          if (Array.isArray(json) && json.length > 0) {
+            dataProducts = json;
+            saveClientProducts(json);
+          }
+        }
+      } catch (err) {
+        console.warn("API products unavailable, falling back to local products", err);
       }
 
-      const dataProducts = await resProducts.json();
-      const dataOrders = await resOrders.json();
+      try {
+        const resOrders = await fetch("/api/orders");
+        if (resOrders.ok) {
+          dataOrders = await resOrders.json();
+        }
+      } catch (err) {
+        console.warn("API orders unavailable", err);
+      }
+
+      if (!dataProducts || !Array.isArray(dataProducts) || dataProducts.length === 0) {
+        dataProducts = getClientProducts();
+      }
 
       setProducts(dataProducts);
       setOrders(dataOrders);
       fetchCategories();
     } catch (err) {
-      setError(err.message || "An unexpected error occurred while fetching resources.");
+      console.error("Dashboard load error, defaulting to local products:", err);
+      setProducts(getClientProducts());
     } finally {
       setLoading(false);
     }
@@ -424,25 +467,42 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
       const endpoint = editProductId ? `/api/products/${editProductId}` : "/api/products";
       const method = editProductId ? "PUT" : "POST";
 
-      const res = await fetch(endpoint, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
+      let apiSuccess = false;
+      try {
+        const res = await fetch(endpoint, {
+          method,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+          apiSuccess = true;
+        }
+      } catch (err) {
+        console.warn("API product save failed, updating local client products", err);
+      }
 
-      if (!res.ok) throw new Error("Could not save product details.");
+      if (!apiSuccess) {
+        let currentLocalProds = getClientProducts();
+        if (editProductId) {
+          currentLocalProds = currentLocalProds.map(p => p.id === editProductId ? { ...p, ...payload } : p);
+        } else {
+          const newProd = { id: `prod-${Date.now()}`, ...payload };
+          currentLocalProds = [newProd, ...currentLocalProds];
+        }
+        saveClientProducts(currentLocalProds);
+        setProducts(currentLocalProds);
+      } else {
+        fetchData();
+      }
 
       if (keepModalOpen && !editProductId) {
-        // Reset only inputs to allow adding more under the same category
         setFormTitle("");
         setFormPrice("");
         setFormStock("");
         setFormDescription("");
         setFormImageUrl("");
-        fetchData();
       } else {
         setShowProductModal(false);
-        fetchData();
       }
     } catch (err) {
       alert(err.message || "Something went wrong saving the product.");
@@ -454,12 +514,21 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
       return;
     }
 
+    let apiSuccess = false;
     try {
       const res = await fetch(`/api/products/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Could not delete product.");
-      fetchData();
+      if (res.ok) {
+        apiSuccess = true;
+        fetchData();
+      }
     } catch (err) {
-      alert(err.message || "Failed to delete product.");
+      console.warn("API delete product failed, updating local client products", err);
+    }
+
+    if (!apiSuccess) {
+      const currentLocalProds = getClientProducts().filter(p => p.id !== id);
+      saveClientProducts(currentLocalProds);
+      setProducts(currentLocalProds);
     }
   };
 
@@ -1147,6 +1216,7 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
                                       alt={prod.title} 
                                       className="w-10 h-10 object-cover rounded-lg border border-slate-500/10 shadow-sm shrink-0" 
                                       referrerPolicy="no-referrer"
+                                      onError={(e) => { e.currentTarget.src = FALLBACK_PRODUCT_IMAGE; }}
                                     />
                                   ) : (
                                     <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 border ${isLight ? "bg-slate-100 border-slate-200 text-slate-400" : "bg-slate-950 border-slate-900 text-slate-500"}`}>
@@ -1829,7 +1899,13 @@ export default function AdminDashboard({ user, onLogout, theme, toggleTheme }) {
                             <div className={`h-24 w-24 sm:h-28 sm:w-28 rounded-xl overflow-hidden border ${isLight ? "bg-slate-100 border-slate-200" : "bg-slate-950 border-slate-800"} flex flex-col items-center justify-center shrink-0 relative group shadow-inner`}>
                               {formImageUrl ? (
                                 <>
-                                  <img src={formImageUrl} alt="Product Preview" className="h-full w-full object-cover" referrerPolicy="no-referrer" />
+                                  <img 
+                                    src={formImageUrl} 
+                                    alt="Product Preview" 
+                                    className="h-full w-full object-cover" 
+                                    referrerPolicy="no-referrer" 
+                                    onError={(e) => { e.currentTarget.src = FALLBACK_PRODUCT_IMAGE; }}
+                                  />
                                   <button
                                     type="button"
                                     onClick={() => setFormImageUrl("")}

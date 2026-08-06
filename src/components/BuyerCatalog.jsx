@@ -8,6 +8,12 @@ import {
 } from "lucide-react";
 import PaymentGateway from "./PaymentGateway";
 import LogoSelectorModal, { getActiveLogoPath } from "./LogoSelectorModal";
+import { 
+  getClientProducts, 
+  saveClientProducts, 
+  getClientCategories, 
+  FALLBACK_PRODUCT_IMAGE 
+} from "../data/initialProducts";
 
 export default function BuyerCatalog({ user, onLogout, onUpdateUser, theme, toggleTheme, onOpenLogin }) {
   const [activeLogo, setActiveLogo] = useState(() => getActiveLogoPath());
@@ -74,11 +80,15 @@ export default function BuyerCatalog({ user, onLogout, onUpdateUser, theme, togg
       const res = await fetch("/api/categories");
       if (res.ok) {
         const data = await res.json();
-        setDynamicCategories(data);
+        if (Array.isArray(data) && data.length > 0) {
+          setDynamicCategories(data);
+          return;
+        }
       }
     } catch (err) {
-      console.error("Failed to fetch dynamic categories", err);
+      console.warn("API categories endpoint unavailable, using local client categories.", err);
     }
+    setDynamicCategories(getClientCategories());
   };
 
   // Active Tab: 'catalog' | 'acquisitions' | 'cart'
@@ -106,23 +116,41 @@ export default function BuyerCatalog({ user, onLogout, onUpdateUser, theme, togg
     try {
       setLoading(true);
       setError(null);
-      const [resProducts, resOrders] = await Promise.all([
-        fetch("/api/products"),
-        fetch("/api/orders")
-      ]);
+      let dataProducts = null;
+      let dataOrders = [];
 
-      if (!resProducts.ok || !resOrders.ok) {
-        throw new Error("Failed to load catalog offerings.");
+      try {
+        const resProducts = await fetch("/api/products");
+        if (resProducts.ok) {
+          const json = await resProducts.json();
+          if (Array.isArray(json) && json.length > 0) {
+            dataProducts = json;
+            saveClientProducts(json);
+          }
+        }
+      } catch (err) {
+        console.warn("API products endpoint unavailable, using local client storage.", err);
       }
 
-      const dataProducts = await resProducts.json();
-      const dataOrders = await resOrders.json();
+      try {
+        const resOrders = await fetch("/api/orders");
+        if (resOrders.ok) {
+          dataOrders = await resOrders.json();
+        }
+      } catch (err) {
+        console.warn("API orders endpoint unavailable.", err);
+      }
+
+      if (!dataProducts || !Array.isArray(dataProducts) || dataProducts.length === 0) {
+        dataProducts = getClientProducts();
+      }
 
       setProducts(dataProducts);
       setOrders(dataOrders);
       await fetchCategories();
     } catch (err) {
-      setError(err.message || "Something went wrong loading catalog listings.");
+      console.error("Catalog load error, defaulting to client products:", err);
+      setProducts(getClientProducts());
     } finally {
       setLoading(false);
     }
@@ -749,6 +777,7 @@ export default function BuyerCatalog({ user, onLogout, onUpdateUser, theme, togg
                               alt={prod.title} 
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out" 
                               referrerPolicy="no-referrer"
+                              onError={(e) => { e.currentTarget.src = FALLBACK_PRODUCT_IMAGE; }}
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-slate-950/20 via-transparent to-transparent" />
                           </div>
