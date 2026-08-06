@@ -1,0 +1,236 @@
+{
+  "users": [
+    {
+      "id": "usr-admin",
+      "email": "yordiasres@gamil.com",
+      "password": "yordi1234",
+      "role": "admin",
+      "name": "Yordi Asres",
+      "companyName": "Merkato Global Group",
+      "approved": true
+    },
+    {
+      "id": "usr-buyer",
+      "email": "buyer@merkato.com",
+      "password": "buyer123",
+      "role": "buyer",
+      "name": "Marcus Aurelius",
+      "companyName": "Stoic Analytics Ltd",
+      "balance": 100000,
+      "approved": true
+    },
+    {
+      "id": "usr-pending",
+      "email": "demo-pending@merkato.com",
+      "password": "buyer123",
+      "role": "buyer",
+      "name": "Arthur Pendragon",
+      "companyName": "Camelot Consulting",
+      "balance": 100000,
+      "approved": true
+    },
+    {
+      "id": "usr-yordi-gamil",
+      "email": "yordiasres@gamil.com",
+      "password": "yordi68757436",
+      "role": "buyer",
+      "name": "Yordi Asres",
+      "companyName": "Individual Operator",
+      "balance": 70000,
+      "approved": true,
+      "age": 24,
+      "gender": "Male"
+    },
+    {
+      "id": "usr-yordi-gmail",
+      "email": "yordiasres@gmail.com",
+      "password": "yordi68757436",
+      "role": "buyer",
+      "name": "Yordi Asres",
+      "companyName": "Individual Operator",
+      "balance": 100000,
+      "approved": true,
+      "age": 24,
+      "gender": "Male"
+    },
+    {
+      "id": "usr-jymyry4xb",
+      "email": "tysdy@gmail.com",
+      "password": "jhjhjh",
+      "role": "buyer",
+      "name": "gzhn",
+      "companyName": "Individual Operator",
+      "balance": 100000,
+      "approved": true,
+      "age": 22,
+      "gender": "Male",
+      "phone": "0970618634"
+    }
+  ],
+  "products": [
+    {
+      "id": "prod-electronics",
+      "title": "Omni Pro Noise-Cancelling Headphones",
+      "description": "Experience premium, rich sound quality with industry-leading hybrid active noise cancellation, smart touch gestures, and a luxury ergonomic leather headband.",
+      "price": 350,
+      "stock": 12,
+      "category": "ELECTRONICS",
+      "tags": [
+        "Audio",
+        "Wireless",
+        "ANC",
+        "Premium"
+      ],
+      "imageUrl": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=600&q=80"
+    },
+    {
+      "id": "prod-clothes",
+      "title": "Classic Cashmere Trench Coat",
+      "description": "Bespoke double-breasted trench coat tailored from pure Mongolian cashmere. Offers superior warmth, a silken touch, and a sophisticated classic drape.",
+      "price": 1250,
+      "stock": 8,
+      "category": "clothes",
+      "tags": [
+        "Cashmere",
+        "Coat",
+        "Tailored",
+        "Winter"
+      ],
+      "imageUrl": "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&w=600&q=80"
+    },
+    {
+      "id": "prod-spices",
+      "title": "Organic Iranian Saffron & Cardamom Blend",
+      "description": "A highly aromatic selection of the finest hand-harvested royal saffron filaments coupled with ground organic green cardamom pods. Sourced responsibly.",
+      "price": 145,
+      "stock": 25,
+      "category": "SPICES",
+      "tags": [
+        "Saffron",
+        "Cardamom",
+        "Spices",
+        "Organic"
+      ],
+      "imageUrl": "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=600&q=80"
+    },
+    {
+      "id": "prod-foode",
+      "title": "Certified A5 Miyazaki Japanese Wagyu Ribeye",
+      "description": "The peak of culinary luxury. Certified Japanese A5 beef with unparalleled snowflake marbling, giving it a rich, buttery melt-in-your-mouth experience.",
+      "price": 495,
+      "stock": 5,
+      "category": "FOODE",
+      "tags": [
+        "Wagyu",
+        "Steak",
+        "Certified",
+        "Luxury"
+      ],
+      "imageUrl": "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80"
+    },
+    {
+      "id": "prod-firuts",
+      "title": "Deluxe Golden Honey Mango Basket",
+      "description": "Premium selection of handpicked, export-quality Golden Honey Mangoes. Celebrated for their rich, nectarous sweetness, floral fragrance, and stringless flesh.",
+      "price": 75,
+      "stock": 18,
+      "category": "FIRUTS",
+      "tags": [
+        "Mango",
+        "Fruits",
+        "Organic",
+        "Fresh"
+      ],
+      "imageUrl": "https://images.unsplash.com/photo-1553279768-865429fa0078?auto=format&fit=crop&w=600&q=80"
+    },
+    {
+      "id": "prod-accessories",
+      "title": "Minimalist Full-Grain Leather Wallet",
+      "description": "Handcrafted from full-grain vegetable-tanned leather. Features an ultra-slim profile, RFID protective lining, and robust hand-stitched reinforcements.",
+      "price": 85,
+      "stock": 30,
+      "category": "accessories",
+      "tags": [
+        "Leather",
+        "Wallet",
+        "Minimalist",
+        "Everyday"
+      ],
+      "imageUrl": "https://images.unsplash.com/photo-1627123424574-724758594e93?auto=format&fit=crop&w=600&q=80"
+    },
+    {
+      "id": "prod-shose",
+      "title": "Vanguard Full-Grain Derby Shoes",
+      "description": "Classic Italian leather Derby shoes. Features a hand-burnished finish, full leather lining, durable storm welt, and high-traction cushioned leather soles.",
+      "price": 320,
+      "stock": 14,
+      "category": "SHOSE",
+      "tags": [
+        "Derby",
+        "Italian Leather",
+        "Classic",
+        "Premium"
+      ],
+      "imageUrl": "https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&w=600&q=80"
+    }
+  ],
+  "orders": [
+    {
+      "id": "ord-seed-1",
+      "buyerId": "usr-buyer",
+      "buyerName": "Marcus Aurelius",
+      "buyerCompany": "Stoic Analytics Ltd",
+      "productId": "prod-brand",
+      "productTitle": "Enterprise Visual Identity Overhaul",
+      "price": 12000,
+      "date": "2026-07-10T09:14:26.788Z",
+      "status": "succeeded",
+      "cardNumberLast4": "4242"
+    },
+    {
+      "id": "ord-seed-2",
+      "buyerId": "usr-buyer",
+      "buyerName": "Marcus Aurelius",
+      "buyerCompany": "Stoic Analytics Ltd",
+      "productId": "prod-growth",
+      "productTitle": "Hyper-Scale Growth Funnel Playbook",
+      "price": 4500,
+      "date": "2026-07-13T09:14:26.788Z",
+      "status": "succeeded",
+      "cardNumberLast4": "9876"
+    },
+    {
+      "id": "ord-8b65fsugc",
+      "buyerId": "usr-yordi-gamil",
+      "buyerName": "Yordi Asres",
+      "buyerCompany": "Individual Operator",
+      "productId": "prod-pr",
+      "productTitle": "Omni-Channel PR Blitz Suite",
+      "price": 15000,
+      "date": "2026-07-14T09:35:56.425Z",
+      "status": "succeeded",
+      "cardNumberLast4": "4536"
+    },
+    {
+      "id": "ord-0q2dbvrpx",
+      "buyerId": "usr-yordi-gamil",
+      "buyerName": "Yordi Asres",
+      "buyerCompany": "Individual Operator",
+      "productId": "prod-pr",
+      "productTitle": "Omni-Channel PR Blitz Suite",
+      "price": 15000,
+      "date": "2026-07-14T09:52:29.008Z",
+      "status": "succeeded",
+      "cardNumberLast4": "2524"
+    }
+  ],
+  "categories": [
+    "ELECTRONICS",
+    "clothes",
+    "SPICES",
+    "FOODE",
+    "FIRUTS",
+    "accessories",
+    "SHOSE"
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "name": "Merkato Store",
+  "description": "An elegant full-stack premium marketing product marketplace featuring a secure admin and buyer dashboard, interactive payment gateway, live inventory management, and an AI-powered campaign copywriter.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
